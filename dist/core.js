@@ -1,6 +1,14 @@
+import { EventWindowResize, TriggerEvent } from "./events";
 var GLContext = {
     canvas: null,
     gl: null
+};
+const OnWindowResized = () => {
+    const { innerWidth, innerHeight } = window;
+    GLContext.canvas.setAttribute("width", `${innerWidth}`);
+    GLContext.canvas.setAttribute("Height", `${innerHeight}`);
+    GLContext.gl.viewport(0, 0, innerWidth, innerHeight);
+    TriggerEvent(new EventWindowResize(innerWidth, innerHeight));
 };
 const GLRun = (app, conf) => {
     GLContext.canvas = document.createElement("canvas");
@@ -10,6 +18,7 @@ const GLRun = (app, conf) => {
     document.body.appendChild(GLContext.canvas);
     GLContext.gl = GLContext.canvas.getContext("webgl2");
     app.GLContext = GLContext;
+    window.addEventListener("resize", () => OnWindowResized());
     app.Init();
     const MainLoop = () => {
         app.Update();

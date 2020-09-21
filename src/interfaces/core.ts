@@ -1,7 +1,7 @@
 interface IGLConfiguration {
     CanvasID: string,
-    Width: Number,
-    Height: Number
+    Width: number,
+    Height: number
 }
 
 interface IGLContext {

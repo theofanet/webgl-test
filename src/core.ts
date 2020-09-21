@@ -1,10 +1,19 @@
 import { IGLApp, IGLConfiguration, IGLRun, IGLContext } from "./interfaces/core";
+import { IEventCallback, EventWindowResize, TriggerEvent } from "./events";
 
 
 var GLContext: IGLContext = {
     canvas: null,
     gl: null
 };
+
+const OnWindowResized = () => {
+    const { innerWidth, innerHeight } = window;
+    GLContext.canvas.setAttribute("width", `${innerWidth}`);
+    GLContext.canvas.setAttribute("Height", `${innerHeight}`);
+    GLContext.gl.viewport(0, 0, innerWidth, innerHeight);
+    TriggerEvent(new EventWindowResize(innerWidth, innerHeight));
+}
 
 const GLRun: IGLRun = (app: IGLApp, conf: IGLConfiguration): void => {
     GLContext.canvas = document.createElement("canvas");
@@ -15,6 +24,8 @@ const GLRun: IGLRun = (app: IGLApp, conf: IGLConfiguration): void => {
 
     GLContext.gl = GLContext.canvas.getContext("webgl2");
     app.GLContext = GLContext;
+
+    window.addEventListener("resize", () => OnWindowResized());
 
     app.Init();
 

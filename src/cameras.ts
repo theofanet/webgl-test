@@ -1,6 +1,7 @@
 import { ICamera, ICamera3D, ICamera2D } from "./interfaces/cameras";
 import { vec3, mat4, glMatrix } from "gl-matrix";
 import { GLContext } from "./core";
+import { EventWindowResize, SubEvent } from "./events";
 
 
 class Camera implements ICamera {
@@ -12,14 +13,14 @@ class Camera implements ICamera {
 
     SetPosition = (position: vec3): void => {
         this.Position = position;
-        this.RecalculateProjectionViewMatrix();
+        this.RecalculateViewMatrix();
     }
 
-    RecalculateViewMatrix = (): void => { throw new Error("Not implemented;"); };
-    RecalculateProjectionMatrix = (): void => { throw new Error("Not implemented;"); };
+    RecalculateViewMatrix = (): void => { };
+    RecalculateProjectionMatrix = (): void => { };
 
     RecalculateProjectionViewMatrix = (): void => { 
-        this.ProjectionViewMatrix = mat4.create();
+        mat4.identity(this.ProjectionViewMatrix);
         mat4.multiply(this.ProjectionViewMatrix, this.ProjectionMatrix, this.ViewMatrix);
     };
 }
@@ -31,8 +32,14 @@ class Camera3D extends Camera implements ICamera3D {
 
     constructor(){
         super();
+
         this.RecalculateProjectionMatrix();
         this.RecalculateViewMatrix();
+
+        SubEvent(EventWindowResize, _ => {
+            this.RecalculateProjectionMatrix();
+            return true;
+        });
     }
 
     SetFOV = (FOV: number): void => {
@@ -41,7 +48,6 @@ class Camera3D extends Camera implements ICamera3D {
     }
 
     RecalculateViewMatrix = (): void => {
-        this.ViewMatrix = mat4.create();
         mat4.lookAt(this.ViewMatrix, this.Position, this.Front, this.Up);
         this.RecalculateProjectionViewMatrix();
     }
@@ -56,6 +62,17 @@ class Camera3D extends Camera implements ICamera3D {
 class Camera2D extends Camera implements ICamera2D {
     Rotation: vec3 = [0, 0, 0];
     ZoomLevel: number = 1.0;
+
+    constructor(){
+        super();
+        this.RecalculateProjectionMatrix();
+        this.RecalculateViewMatrix();
+
+        SubEvent(EventWindowResize, _ => {
+            this.RecalculateProjectionMatrix();
+            return true;
+        });
+    }
 
     SetZoomLevel = (zoom: number): void => {
         this.ZoomLevel = zoom;

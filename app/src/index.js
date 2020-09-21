@@ -1,5 +1,19 @@
-import { GLRun, VertexBuffer, IndexBuffer, VertexArray, Shader, Camera3D } from "../../";
-import { mat4, glMatrix } from "gl-matrix";
+import { GLRun, VertexBuffer, IndexBuffer, VertexArray, Shader, Camera3D, Camera2D, EventWindowResize } from "../../";
+
+
+const vertices2D = new Float32Array([
+    // front
+    -.5, -.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    .5, -.5, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+    .5,  .5, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+    -.5,  .5, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0
+]);
+
+const indices2D = new Int16Array([
+    0, 3, 2,
+    2, 1, 0
+]);
+
 
 const vertices = new Float32Array([
     // front
@@ -76,39 +90,55 @@ void main(){
     color = vec4(1.0, 0.0, 0.0, 1.0);
 }`;
 
-let va;
+let va3D, va2D;
 let shader;
-let camera;
+let camera2D, camera3D;
 
 function onKeyDown(e){
-    let pos = camera.Position;
+    let pos = camera2D.Position;
     if(e.keyCode == 65)
         pos[0] -= 1;
     else if(e.keyCode == 68)
         pos[0] += 1;
-    camera.SetPosition(pos);
-    console.log(e.keyCode);
+    camera2D.SetPosition(pos);
 }
 
 function InitScene() {
-    const { canvas, gl } = this.GLContext;
+    const { gl } = this.GLContext;
 
-    camera = new Camera3D();
-    camera.SetPosition([5, 5, 5]);
+    camera2D = new Camera2D();
+    camera2D.SetPosition([-1, 0, 0]);
+
+    camera3D = new Camera3D();
+    camera3D.SetPosition([5, 5, 5]);
 
     document.addEventListener("keydown", onKeyDown);
 
-    let vb = new VertexBuffer(vertices);
+    // 2D
+    let vb = new VertexBuffer(vertices2D);
     vb.AddAttrib(3, gl.FLOAT);
     vb.AddAttrib(2, gl.FLOAT);
     vb.AddAttrib(3, gl.FLOAT);
 
-    let ib = new IndexBuffer(indices);
+    let ib = new IndexBuffer(indices2D);
 
-    va = new VertexArray();
-    va.AddVertexBuffer(vb);
-    va.SetIndexBuffer(ib);
+    va2D = new VertexArray();
+    va2D.AddVertexBuffer(vb);
+    va2D.SetIndexBuffer(ib);
 
+    // 3D
+    vb = new VertexBuffer(vertices);
+    vb.AddAttrib(3, gl.FLOAT);
+    vb.AddAttrib(2, gl.FLOAT);
+    vb.AddAttrib(3, gl.FLOAT);
+
+    ib = new IndexBuffer(indices);
+
+    va3D = new VertexArray();
+    va3D.AddVertexBuffer(vb);
+    va3D.SetIndexBuffer(ib);
+
+    // Shader
     shader = new Shader({
         [gl.VERTEX_SHADER]: [VERTEX_SHADER],
         [gl.FRAGMENT_SHADER]: [FRAGMENT_SHADER]
@@ -125,9 +155,12 @@ function DrawScene() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     shader.Bind();
-    shader.SetMat4("u_ViewProjection", camera.ProjectionViewMatrix);
 
-    va.Draw();
+    shader.SetMat4("u_ViewProjection", camera2D.ProjectionViewMatrix);
+    va2D.Draw();
+
+    shader.SetMat4("u_ViewProjection", camera3D.ProjectionViewMatrix);
+    va3D.Draw();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
